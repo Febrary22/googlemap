@@ -8,6 +8,7 @@
   'use strict';
 
   const Geo = global.Geo;
+  const TimelineScene = global.TimelineScene;
 
   function activityColor(activityType) {
     if (!activityType) return null;
@@ -249,9 +250,11 @@
 
     const idx = scene.indexAtProgress(cam.progressFrac);
     let fromIdx = 0;
-    if (settings.trailMode === 'fade' && settings.baseDuration > 0 && scene.points.length) {
-      const trailFraction = settings.trailSeconds / settings.baseDuration;
-      fromIdx = Math.max(0, idx - Math.ceil(trailFraction * scene.points.length));
+    if (settings.trailMode === 'fade' && scene.points.length && scene.points[idx]) {
+      // Real elapsed time, not video time: only the last `trailHours` of
+      // actual movement stays on screen, regardless of pacing/dwell weighting.
+      const cutoff = scene.points[idx].time - settings.trailHours * 3600 * 1000;
+      fromIdx = TimelineScene.timeLowerBound(scene.points, cutoff);
     }
 
     drawPath(ctx, mapRenderer, cam, scene, fromIdx, idx, settings, w, h);

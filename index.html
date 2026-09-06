@@ -181,10 +181,11 @@
                 <option value="fade">최근 궤적만 남기고 서서히 사라짐 (혜성 효과)</option>
               </select>
             </div>
-            <div class="field-row" id="row-trail-seconds" hidden>
-              <label>남기는 길이(초) <span class="value-echo" id="echo-trail-seconds">6초</span></label>
-              <input type="range" id="opt-trail-seconds" min="1" max="20" step="1" value="6" />
+            <div class="field-row" id="row-trail-hours" hidden>
+              <label>남기는 시간(실제 시간 기준) <span class="value-echo" id="echo-trail-hours">6시간</span></label>
+              <input type="range" id="opt-trail-hours" min="1" max="72" step="1" value="6" />
             </div>
+            <p class="muted small" id="hint-trail-hours" hidden>예: 6시간으로 두면, 실제로 6시간 넘게 지난 위치는 화면에서 사라지고 최근 6시간 동안의 움직임만 계속 보여요.</p>
           </details>
 
           <details class="settings-group" open>

@@ -535,7 +535,9 @@
 
   function syncFieldVisibility() {
     $('#row-line-color').hidden = $('#opt-line-colormode').value !== 'solid';
-    $('#row-trail-seconds').hidden = $('#opt-trail-mode').value !== 'fade';
+    const isFadeTrail = $('#opt-trail-mode').value === 'fade';
+    $('#row-trail-hours').hidden = !isFadeTrail;
+    $('#hint-trail-hours').hidden = !isFadeTrail;
     $('#row-follow-zoom').hidden = $('#opt-camera-mode').value !== 'follow';
     const isCluster = $('#opt-camera-mode').value === 'cluster';
     $('#row-cluster-window').hidden = !isCluster;
@@ -605,7 +607,7 @@
       lineWidth: Number(document.getElementById('opt-line-width').value),
       lineStyle: document.getElementById('opt-line-style').value,
       trailMode: document.getElementById('opt-trail-mode').value,
-      trailSeconds: Number(document.getElementById('opt-trail-seconds').value),
+      trailHours: Number(document.getElementById('opt-trail-hours').value),
       overlayDate: document.getElementById('opt-overlay-date').checked,
       overlayStats: document.getElementById('opt-overlay-stats').checked,
       overlayProgressBar: document.getElementById('opt-overlay-progressbar').checked,
@@ -688,7 +690,7 @@
     document.getElementById('opt-camera-mode').addEventListener('change', syncFieldVisibility);
 
     bindEcho('opt-line-width', 'echo-line-width', (v) => `${v}px`);
-    bindEcho('opt-trail-seconds', 'echo-trail-seconds', (v) => `${v}초`);
+    bindEcho('opt-trail-hours', 'echo-trail-hours', (v) => `${v}시간`);
     bindEcho('opt-follow-zoom', 'echo-follow-zoom', (v) => `${v}`);
     bindEcho('opt-cluster-window', 'echo-cluster-window', (v) => `±${v}시간`);
     bindEcho('opt-music-volume', 'echo-music-volume', (v) => `${Math.round(Number(v) * 100)}%`);

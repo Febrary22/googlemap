@@ -285,7 +285,7 @@
     };
   }
 
-  const api = { filterRange, decimate, buildStrokes, buildScene };
+  const api = { filterRange, decimate, buildStrokes, buildScene, timeLowerBound, timeUpperBound };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.TimelineScene = api;
 })(typeof window !== 'undefined' ? window : globalThis);
