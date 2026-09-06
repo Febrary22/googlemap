@@ -537,6 +537,9 @@
     $('#row-line-color').hidden = $('#opt-line-colormode').value !== 'solid';
     $('#row-trail-seconds').hidden = $('#opt-trail-mode').value !== 'fade';
     $('#row-follow-zoom').hidden = $('#opt-camera-mode').value !== 'follow';
+    const isCluster = $('#opt-camera-mode').value === 'cluster';
+    $('#row-cluster-window').hidden = !isCluster;
+    $('#hint-cluster-mode').hidden = !isCluster;
   }
 
   function bindEcho(inputSel, echoSel, fmt) {
@@ -590,6 +593,7 @@
       dwellWeighting: document.getElementById('opt-dwell-weighting').checked,
       focusPoints: getAutoFocusPoints().concat(State.customFocusPoints),
       followZoom: Number(document.getElementById('opt-follow-zoom').value),
+      clusterWindowMs: Number(document.getElementById('opt-cluster-window').value) * 3600 * 1000,
       padding: Math.round(canvasW * 0.08),
       minZoom: 2,
       maxZoom: provider === 'satellite' ? 19 : 18,
@@ -686,6 +690,7 @@
     bindEcho('opt-line-width', 'echo-line-width', (v) => `${v}px`);
     bindEcho('opt-trail-seconds', 'echo-trail-seconds', (v) => `${v}초`);
     bindEcho('opt-follow-zoom', 'echo-follow-zoom', (v) => `${v}`);
+    bindEcho('opt-cluster-window', 'echo-cluster-window', (v) => `±${v}시간`);
     bindEcho('opt-music-volume', 'echo-music-volume', (v) => `${Math.round(Number(v) * 100)}%`);
     bindEcho('opt-music-start', 'echo-music-start', (v) => `${v}초`);
     bindEcho('opt-duration', 'echo-duration', (v) => `${v}초`);

@@ -102,6 +102,28 @@
     return { lat: (box.minLat + box.maxLat) / 2, lng: (box.minLng + box.maxLng) / 2 };
   }
 
+  /** Widen a box (symmetrically, around its own center) so each side spans at least `minKm`. */
+  function expandBoxToMinSpanKm(box, minKm) {
+    if (!box) return box;
+    const midLat = (box.minLat + box.maxLat) / 2;
+    const kmPerDegLat = 111.32;
+    const kmPerDegLng = Math.max(111.32 * Math.cos((midLat * Math.PI) / 180), 0.01);
+    const latSpanKm = (box.maxLat - box.minLat) * kmPerDegLat;
+    const lngSpanKm = (box.maxLng - box.minLng) * kmPerDegLng;
+    let { minLat, maxLat, minLng, maxLng } = box;
+    if (latSpanKm < minKm) {
+      const deltaDeg = (minKm - latSpanKm) / 2 / kmPerDegLat;
+      minLat -= deltaDeg;
+      maxLat += deltaDeg;
+    }
+    if (lngSpanKm < minKm) {
+      const deltaDeg = (minKm - lngSpanKm) / 2 / kmPerDegLng;
+      minLng -= deltaDeg;
+      maxLng += deltaDeg;
+    }
+    return { minLat, maxLat, minLng, maxLng };
+  }
+
   const api = {
     TILE_SIZE,
     worldSize,
@@ -112,6 +134,7 @@
     lerpLng,
     easeInOutCubic,
     clamp,
+    expandBoxToMinSpanKm,
     boundingBox,
     zoomForBounds,
     center,

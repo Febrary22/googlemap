@@ -192,10 +192,16 @@
             <div class="field-row">
               <label>카메라 모드</label>
               <select id="opt-camera-mode">
-                <option value="fit" selected>전체 경로 고정 화면</option>
+                <option value="cluster" selected>🎯 이동하는 곳 자동 확대 (추천)</option>
+                <option value="fit">전체 경로 고정 화면</option>
                 <option value="reveal">점점 확장되며 보여주기</option>
                 <option value="follow">이동 지점 따라가기</option>
               </select>
+            </div>
+            <p class="muted small" id="hint-cluster-mode">평소엔 집·회사처럼 가까운 곳을 확대해서 보여주다가, 강릉·부산·제주 등 멀리 이동하면 카메라가 그 지역으로 자연스럽게 확대·이동해요.</p>
+            <div class="field-row" id="row-cluster-window">
+              <label>확대 범위(클러스터 반경) <span class="value-echo" id="echo-cluster-window">±6시간</span></label>
+              <input type="range" id="opt-cluster-window" min="2" max="48" step="1" value="6" />
             </div>
             <div class="field-row" id="row-follow-zoom" hidden>
               <label>따라가기 확대 정도 <span class="value-echo" id="echo-follow-zoom">13</span></label>

@@ -13,6 +13,28 @@
   const GAP_MS = 3 * 60 * 60 * 1000; // 3h silence -> new stroke segment
   const FLIGHT_KMH = 250; // implied speed above this -> treat as a "long jump" (flight)
 
+  /** First index in a time-sorted array with .time >= t. */
+  function timeLowerBound(arr, t) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid].time < t) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  /** First index in a time-sorted array with .time > t (i.e. an exclusive upper bound). */
+  function timeUpperBound(arr, t) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid].time <= t) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
   /** Filter points/visits to a [start,end] ms range (inclusive). */
   function filterRange(data, startMs, endMs) {
     const points = data.points.filter((p) => p.time >= startMs && p.time <= endMs);
@@ -144,6 +166,25 @@
       if (settings.cameraMode === 'reveal') {
         const idx = Math.max(1, indexAtProgress(frac));
         const box = Geo.boundingBox(points.slice(0, idx + 1)) || allBox;
+        return {
+          center: Geo.center(box),
+          zoom: Geo.zoomForBounds(box, settings.canvasW, settings.canvasH, padding, minZoom, maxZoom),
+        };
+      }
+      if (settings.cameraMode === 'cluster') {
+        // Zoom in on wherever the action currently is: frame a sliding
+        // real-time window around the current point instead of the whole
+        // trip, so a weekday commute reads as a tight home<->work loop and
+        // a weekend trip reads as the camera swooping out to that city.
+        const idx = indexAtProgress(frac);
+        const p = points[idx];
+        if (!p) return { center: fitCenter, zoom: fitZoom };
+        const windowMs = settings.clusterWindowMs == null ? 6 * 3600 * 1000 : settings.clusterWindowMs;
+        const lo = timeLowerBound(points, p.time - windowMs);
+        const hi = timeUpperBound(points, p.time + windowMs); // exclusive
+        const windowPoints = points.slice(lo, Math.max(hi, lo + 1));
+        let box = Geo.boundingBox(windowPoints) || Geo.boundingBox([p]);
+        box = Geo.expandBoxToMinSpanKm(box, settings.clusterMinSpanKm == null ? 3 : settings.clusterMinSpanKm);
         return {
           center: Geo.center(box),
           zoom: Geo.zoomForBounds(box, settings.canvasW, settings.canvasH, padding, minZoom, maxZoom),
