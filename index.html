@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>내 타임라인 영상 만들기</title>
+<meta name="description" content="구글 타임라인 JSON 파일을 업로드해서 나만의 이동 경로 영상을 브라우저에서 바로 만들고, 링크로 공유하세요. 서버 업로드 없이 100% 브라우저에서 처리됩니다." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%BA%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="preconnect" href="https://basemaps.cartocdn.com" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-emoji" aria-hidden="true">🗺️</span>
+      <div>
+        <h1>내 타임라인 영상 만들기</h1>
+        <p class="tagline">구글 타임라인 데이터로 나만의 이동 경로 영상을 만들어보세요 — 전부 이 브라우저 안에서 처리돼요.</p>
+      </div>
+    </div>
+    <ol class="stepper" id="stepper">
+      <li class="step active" data-step="guide"><span class="step-num">1</span><span class="step-label">타임라인 받기</span></li>
+      <li class="step" data-step="upload"><span class="step-num">2</span><span class="step-label">업로드 &amp; 기간</span></li>
+      <li class="step" data-step="settings"><span class="step-num">3</span><span class="step-label">영상 설정</span></li>
+      <li class="step" data-step="render"><span class="step-num">4</span><span class="step-label">영상 만들기</span></li>
+    </ol>
+  </header>
+
+  <main>
+    <!-- ============ STEP 1 : GUIDE ============ -->
+    <section class="step-panel active" id="step-guide">
+      <div class="panel-card">
+        <h2>1. 먼저 내 구글 타임라인 데이터를 다운로드하세요</h2>
+        <p class="muted">기기 종류에 맞는 방법을 따라 <code>Timeline.json</code> (또는 Takeout <code>zip</code>) 파일을 받아주세요.</p>
+
+        <div class="tabs" id="guide-tabs" role="tablist">
+          <button class="tab active" data-tab="android" role="tab" aria-selected="true">🤖 안드로이드</button>
+          <button class="tab" data-tab="iphone" role="tab" aria-selected="false">📱 아이폰</button>
+          <button class="tab" data-tab="takeout" role="tab" aria-selected="false">💻 PC · 10년 전체 기록</button>
+        </div>
+
+        <div class="tab-panel active" data-panel="android">
+          <ol class="guide-steps">
+            <li>휴대폰 <b>설정</b> 앱 → <b>위치</b> → <b>위치 서비스</b> → <b>타임라인</b>으로 이동해요.<br/>(또는 Google 지도 앱 → 프로필 사진 → <b>내 타임라인</b>)</li>
+            <li>오른쪽 위 점 3개(⋮) 메뉴 → <b>위치 및 개인정보 설정</b>을 열어요.</li>
+            <li><b>타임라인 데이터 내보내기 (Export Timeline data)</b>를 선택해요.</li>
+            <li><code>Timeline.json</code> 파일이 다운로드돼요. 이 파일을 다음 단계에서 그대로 올리면 돼요.</li>
+          </ol>
+        </div>
+
+        <div class="tab-panel" data-panel="iphone">
+          <ol class="guide-steps">
+            <li>Google 지도 앱을 열고 구글 계정으로 로그인해요.</li>
+            <li>프로필 사진 → <b>내 타임라인</b>을 눌러요.</li>
+            <li>설정(톱니바퀴) 아이콘 → <b>타임라인 데이터 내보내기</b>를 선택해요.</li>
+            <li><code>Timeline.json</code> 파일이 "파일" 앱에 저장돼요. 그 파일을 다음 단계에서 올려주세요.</li>
+          </ol>
+        </div>
+
+        <div class="tab-panel" data-panel="takeout">
+          <ol class="guide-steps">
+            <li><a href="https://takeout.google.com" target="_blank" rel="noopener">takeout.google.com</a> 에 접속해서 로그인해요.</li>
+            <li><b>전체 선택 해제</b> 후 <b>위치기록(타임라인)</b> 항목만 체크해요.</li>
+            <li>파일 형식/보관 위치를 고르고 <b>내보내기 만들기</b>를 눌러요.</li>
+            <li>이메일로 온 다운로드 링크에서 <code>zip</code> 파일을 받아 압축을 풀면, <code>Records.json</code> 또는 <code>Semantic Location History</code> 폴더 안의 월별 파일들이 있어요.</li>
+          </ol>
+          <p class="hint-box">💡 <b>10년치 전체 기록</b>이 필요하다면 기기의 "타임라인 내보내기"보다 이 Takeout 방법이 더 오래된 기록까지 포함하고 있을 가능성이 높아요. 다음 단계에서 <b>여러 파일을 한 번에</b> 선택해서 올릴 수 있어요.</p>
+        </div>
+
+        <div class="callout">
+          🔒 <b>개인정보는 안전해요.</b> 업로드한 위치 데이터는 서버로 전송되지 않고, 이 브라우저 안에서만 계산·저장됩니다. 탭을 닫으면 데이터도 함께 사라져요.
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn btn-primary" id="btn-guide-next">파일을 받았어요 — 다음 단계 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 2 : UPLOAD + RANGE ============ -->
+    <section class="step-panel" id="step-upload">
+      <div class="panel-card">
+        <h2>2. JSON 파일 업로드 &amp; 기간 선택</h2>
+
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept=".json,application/json" multiple hidden />
+          <p><b>클릭해서 파일 선택</b> 또는 이 영역에 파일을 끌어다 놓으세요.</p>
+          <p class="muted small">Timeline.json 한 개, 또는 Semantic Location History 폴더의 여러 파일을 한 번에 선택할 수 있어요.</p>
+        </div>
+
+        <div id="upload-progress" class="progress-row" hidden>
+          <div class="progress-bar"><div class="progress-fill" id="upload-progress-fill"></div></div>
+          <span id="upload-progress-text" class="small muted"></span>
+        </div>
+
+        <div id="data-summary" class="summary-card" hidden>
+          <div class="summary-item"><span class="summary-num" id="sum-points">0</span><span class="summary-label">지점</span></div>
+          <div class="summary-item"><span class="summary-num" id="sum-visits">0</span><span class="summary-label">방문 장소</span></div>
+          <div class="summary-item"><span class="summary-num" id="sum-range">-</span><span class="summary-label">전체 기록 기간</span></div>
+        </div>
+
+        <div id="range-section" hidden>
+          <h3>만들고 싶은 기간을 선택하세요</h3>
+          <div class="preset-row" id="preset-buttons">
+            <button class="chip" data-preset="all">전체 기간</button>
+            <button class="chip" data-preset="this-year">올해</button>
+            <button class="chip" data-preset="last-year">작년</button>
+            <button class="chip" data-preset="last-5-years">최근 5년</button>
+          </div>
+
+          <div class="custom-range-row">
+            <label>시작일 <input type="date" id="range-start" /></label>
+            <label>종료일 <input type="date" id="range-end" /></label>
+          </div>
+
+          <div class="year-grid" id="year-grid"></div>
+
+          <div class="range-stats" id="range-stats">기간을 선택해주세요.</div>
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn btn-ghost" id="btn-upload-back">← 이전</button>
+          <button class="btn btn-primary" id="btn-upload-next" disabled>영상 설정으로 이동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 3 : VIDEO SETTINGS ============ -->
+    <section class="step-panel" id="step-settings">
+      <div class="settings-layout">
+        <div class="settings-form">
+          <h2>3. 영상 설정</h2>
+
+          <details class="settings-group" open>
+            <summary>🗺️ 지도 스타일</summary>
+            <div class="field-row">
+              <label>배경 지도</label>
+              <select id="opt-provider">
+                <option value="voyager" selected>컬러 (Voyager)</option>
+                <option value="positron">라이트 (Positron)</option>
+                <option value="dark">다크 (Dark Matter)</option>
+                <option value="satellite">위성</option>
+                <option value="none">없음 (미니멀 배경)</option>
+              </select>
+            </div>
+          </details>
+
+          <details class="settings-group" open>
+            <summary>📍 경로선 스타일</summary>
+            <div class="field-row">
+              <label>선 색상 모드</label>
+              <select id="opt-line-colormode">
+                <option value="solid">단색</option>
+                <option value="gradient" selected>시간순 그라데이션</option>
+                <option value="activity">이동수단별 색상</option>
+              </select>
+            </div>
+            <div class="field-row" id="row-line-color" hidden>
+              <label>선 색상</label>
+              <input type="color" id="opt-line-color" value="#4f8cff" />
+            </div>
+            <div class="field-row">
+              <label>선 두께 <span class="value-echo" id="echo-line-width">4px</span></label>
+              <input type="range" id="opt-line-width" min="1" max="10" step="0.5" value="4" />
+            </div>
+            <div class="field-row">
+              <label>선 스타일</label>
+              <select id="opt-line-style">
+                <option value="solid" selected>실선</option>
+                <option value="dashed">점선</option>
+                <option value="glow">네온 글로우</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label>궤적 남기기</label>
+              <select id="opt-trail-mode">
+                <option value="full" selected>전체 경로 유지</option>
+                <option value="fade">최근 궤적만 남기고 서서히 사라짐 (혜성 효과)</option>
+              </select>
+            </div>
+            <div class="field-row" id="row-trail-seconds" hidden>
+              <label>남기는 길이(초) <span class="value-echo" id="echo-trail-seconds">6초</span></label>
+              <input type="range" id="opt-trail-seconds" min="1" max="20" step="1" value="6" />
+            </div>
+          </details>
+
+          <details class="settings-group" open>
+            <summary>🔍 카메라 &amp; 확대</summary>
+            <div class="field-row">
+              <label>카메라 모드</label>
+              <select id="opt-camera-mode">
+                <option value="fit" selected>전체 경로 고정 화면</option>
+                <option value="reveal">점점 확장되며 보여주기</option>
+                <option value="follow">이동 지점 따라가기</option>
+              </select>
+            </div>
+            <div class="field-row" id="row-follow-zoom" hidden>
+              <label>따라가기 확대 정도 <span class="value-echo" id="echo-follow-zoom">13</span></label>
+              <input type="range" id="opt-follow-zoom" min="4" max="18" step="0.5" value="13" />
+            </div>
+
+            <p class="muted small">오래 머문 장소를 자동으로 찾았어요. 영상에서 확대해서 보여줄 곳을 골라보세요.</p>
+            <div class="auto-visits-list" id="auto-visits-list"></div>
+
+            <button type="button" class="btn btn-ghost btn-small" id="btn-add-focus">+ 지도에서 직접 지점 추가</button>
+            <div class="custom-focus-list" id="custom-focus-list"></div>
+          </details>
+
+          <details class="settings-group" open>
+            <summary>🎵 음악</summary>
+            <div class="field-row">
+              <label>음악 파일</label>
+              <input type="file" id="opt-music-file" accept="audio/*" />
+            </div>
+            <div id="music-controls" hidden>
+              <div class="field-row">
+                <label>볼륨 <span class="value-echo" id="echo-music-volume">80%</span></label>
+                <input type="range" id="opt-music-volume" min="0" max="1" step="0.05" value="0.8" />
+              </div>
+              <div class="field-row">
+                <label>시작 위치(초) <span class="value-echo" id="echo-music-start">0초</span></label>
+                <input type="range" id="opt-music-start" min="0" max="120" step="1" value="0" />
+              </div>
+              <div class="field-row">
+                <label><input type="checkbox" id="opt-music-fadeout" checked /> 끝날 때 서서히 페이드아웃</label>
+              </div>
+              <button type="button" class="btn btn-ghost btn-small" id="btn-clear-music">음악 제거</button>
+              <p class="muted small">⚠️ 저작권이 있는 음악을 넣은 영상을 공개적으로 공유할 경우 저작권 규정을 확인해주세요.</p>
+            </div>
+          </details>
+
+          <details class="settings-group" open>
+            <summary>⏱️ 진행 속도 &amp; 길이</summary>
+            <div class="field-row">
+              <label>영상 길이 <span class="value-echo" id="echo-duration">45초</span></label>
+              <input type="range" id="opt-duration" min="10" max="180" step="5" value="45" />
+            </div>
+            <div class="field-row">
+              <label><input type="checkbox" id="opt-dwell-weighting" checked /> 오래 머문 장소에서 살짝 더 머무르기</label>
+            </div>
+          </details>
+
+          <details class="settings-group" open>
+            <summary>📊 화면 오버레이</summary>
+            <div class="field-row"><label><input type="checkbox" id="opt-overlay-date" checked /> 날짜 표시</label></div>
+            <div class="field-row"><label><input type="checkbox" id="opt-overlay-stats" checked /> 누적 이동거리 표시</label></div>
+            <div class="field-row"><label><input type="checkbox" id="opt-overlay-progressbar" checked /> 진행 바 표시</label></div>
+            <div class="field-row"><label><input type="checkbox" id="opt-overlay-summary" checked /> 마지막에 요약 카드 보여주기</label></div>
+          </details>
+
+          <details class="settings-group" open>
+            <summary>📤 출력 설정</summary>
+            <div class="field-row">
+              <label>화면 비율</label>
+              <select id="opt-aspect">
+                <option value="16:9" selected>16:9 (유튜브·가로)</option>
+                <option value="9:16">9:16 (릴스·쇼츠·세로)</option>
+                <option value="1:1">1:1 (정사각형)</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label>해상도</label>
+              <select id="opt-resolution">
+                <option value="720">720p</option>
+                <option value="1080" selected>1080p</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label>프레임레이트</label>
+              <select id="opt-fps">
+                <option value="24">24fps</option>
+                <option value="30" selected>30fps</option>
+              </select>
+            </div>
+          </details>
+
+          <div class="panel-actions">
+            <button class="btn btn-ghost" id="btn-settings-back">← 이전</button>
+            <button class="btn btn-primary" id="btn-settings-next">🎬 영상 만들기 →</button>
+          </div>
+        </div>
+
+        <div class="settings-preview">
+          <canvas id="preview-canvas" width="480" height="270"></canvas>
+          <div class="preview-controls">
+            <button class="btn btn-ghost btn-small" id="btn-preview-play">▶ 미리보기 재생</button>
+            <input type="range" id="preview-scrub" min="0" max="1" step="0.001" value="0" />
+          </div>
+          <p class="muted small">미리보기는 실제 녹화 없이 설정을 빠르게 확인하는 용도예요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 4 : RENDER ============ -->
+    <section class="step-panel" id="step-render">
+      <div class="panel-card render-card">
+        <h2>4. 영상 만들기</h2>
+
+        <div class="render-stage">
+          <canvas id="render-canvas"></canvas>
+        </div>
+
+        <div class="render-progress">
+          <div class="progress-bar"><div class="progress-fill" id="render-progress-fill"></div></div>
+          <span id="render-status" class="small muted">대기 중...</span>
+        </div>
+
+        <div class="panel-actions" id="render-controls-idle">
+          <button class="btn btn-ghost" id="btn-render-back">← 설정으로 돌아가기</button>
+          <button class="btn btn-primary" id="btn-render-start">🎬 녹화 시작</button>
+        </div>
+
+        <div class="panel-actions" id="render-controls-active" hidden>
+          <button class="btn btn-danger" id="btn-render-cancel">중지</button>
+        </div>
+
+        <div class="render-result" id="render-result" hidden>
+          <video id="result-video" controls></video>
+          <div class="panel-actions">
+            <a class="btn btn-primary" id="btn-download" download="my-timeline.webm">⬇ 영상 다운로드</a>
+            <button class="btn btn-ghost" id="btn-rerender">설정 다시 조정하기</button>
+            <button class="btn btn-ghost" id="btn-restart">처음부터 다시 만들기</button>
+          </div>
+          <p class="muted small" id="format-note"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>모든 처리는 이 브라우저 안에서만 이루어지며, 어떤 위치 데이터도 서버로 전송되지 않습니다.</p>
+    <p class="muted small">지도 데이터 © OpenStreetMap contributors, © CARTO · 위성 이미지 © Esri</p>
+  </footer>
+
+  <!-- Focus-point picker modal (Leaflet) -->
+  <div class="modal" id="focus-modal" hidden>
+    <div class="modal-content">
+      <h3>지도에서 확대할 지점 클릭</h3>
+      <div id="picker-map"></div>
+      <div class="field-row">
+        <label>이름표 <input type="text" id="focus-label" placeholder="예: 부산 여행" /></label>
+      </div>
+      <div class="field-row">
+        <label>확대 정도 <span class="value-echo" id="echo-focus-zoom">15</span></label>
+        <input type="range" id="focus-zoom" min="4" max="19" step="0.5" value="15" />
+      </div>
+      <div class="field-row">
+        <label>머무는 시간(초) <span class="value-echo" id="echo-focus-hold">2.5초</span></label>
+        <input type="range" id="focus-hold" min="0.5" max="8" step="0.5" value="2.5" />
+      </div>
+      <div class="panel-actions">
+        <button class="btn btn-ghost" id="btn-focus-cancel">취소</button>
+        <button class="btn btn-primary" id="btn-focus-add" disabled>이 지점 추가</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/mapCanvas.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/sceneRenderer.js"></script>
+<script src="js/videoRecorder.js"></script>
+<script src="js/pickerMap.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
