@@ -52,31 +52,43 @@
     return settings.lineColor;
   }
 
+  // For 'glow' style: layer a wide, translucent, heavily-blurred halo under a
+  // thin bright core instead of a single blurred stroke — reads as a proper
+  // neon line rather than a soft smudge, and is what a single shadowBlur
+  // pass tends to look muddy trying to do on its own.
+  const GLOW_PASSES = [
+    { widthMul: 5, alpha: 0.18, blurMul: 5 },
+    { widthMul: 2.5, alpha: 0.35, blurMul: 2.5 },
+    { widthMul: 1, alpha: 1, blurMul: 0 },
+  ];
+  const SOLID_PASS = [{ widthMul: 1, alpha: 1, blurMul: 0 }];
+
   function drawPath(ctx, mapRenderer, cam, scene, fromIdx, toIdx, settings, w, h) {
     const points = scene.points;
     if (toIdx <= fromIdx) return;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = settings.lineWidth;
     if (settings.lineStyle === 'dashed') ctx.setLineDash([settings.lineWidth * 2.2, settings.lineWidth * 2.2]);
     else ctx.setLineDash([]);
 
-    for (let i = Math.max(1, fromIdx + 1); i <= toIdx; i++) {
-      if (scene.isJumpAt[i]) continue; // gaps/flights are drawn separately
-      const p0 = mapRenderer.project(points[i - 1].lat, points[i - 1].lng, cam.center, cam.zoom, w, h);
-      const p1 = mapRenderer.project(points[i].lat, points[i].lng, cam.center, cam.zoom, w, h);
-      ctx.beginPath();
-      ctx.strokeStyle = segmentColor(settings, scene, i, w);
-      if (settings.lineStyle === 'glow') {
-        ctx.shadowColor = ctx.strokeStyle;
-        ctx.shadowBlur = settings.lineWidth * 3;
-      } else {
-        ctx.shadowBlur = 0;
+    const passes = settings.lineStyle === 'glow' ? GLOW_PASSES : SOLID_PASS;
+    for (const pass of passes) {
+      ctx.lineWidth = settings.lineWidth * pass.widthMul;
+      ctx.globalAlpha = pass.alpha;
+      for (let i = Math.max(1, fromIdx + 1); i <= toIdx; i++) {
+        if (scene.isJumpAt[i]) continue; // gaps/flights are drawn separately
+        const p0 = mapRenderer.project(points[i - 1].lat, points[i - 1].lng, cam.center, cam.zoom, w, h);
+        const p1 = mapRenderer.project(points[i].lat, points[i].lng, cam.center, cam.zoom, w, h);
+        ctx.beginPath();
+        ctx.strokeStyle = segmentColor(settings, scene, i, w);
+        ctx.shadowBlur = pass.blurMul ? settings.lineWidth * pass.blurMul : 0;
+        ctx.shadowColor = pass.blurMul ? ctx.strokeStyle : 'transparent';
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
       }
-      ctx.moveTo(p0.x, p0.y);
-      ctx.lineTo(p1.x, p1.y);
-      ctx.stroke();
     }
+    ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
     ctx.setLineDash([]);
   }
@@ -104,12 +116,18 @@
     const p = mapRenderer.project(point.lat, point.lng, cam.center, cam.zoom, w, h);
     ctx.save();
     ctx.shadowColor = settings.lineColor;
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 22;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+    // A thin dark ring keeps the marker readable on light basemaps too.
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.fillStyle = settings.lineColor;
     ctx.beginPath();
     ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
@@ -243,6 +261,67 @@
     ctx.restore();
   }
 
+  const INTRO_SECONDS = 2.2;
+
+  function drawIntroCard(ctx, scene, settings, w, h, alpha) {
+    if (alpha <= 0) return;
+    const last = scene.points.length - 1;
+    const totalKm = scene.cumDistanceKm[last] || 0;
+    const first = scene.points[0], end = scene.points[last];
+    const name = settings.introTitle && settings.introTitle.trim();
+    const title = name ? `${name}의 타임라인` : '나의 타임라인';
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(6,10,18,0.55)';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.font = `800 ${Math.round(w * 0.062)}px system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif`;
+    ctx.fillText(title, w / 2, h * 0.46);
+
+    if (first && end) {
+      ctx.font = `500 ${Math.round(w * 0.03)}px system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText(`${formatDate(first.time)} ~ ${formatDate(end.time)} · ${formatKm(totalKm)}`, w / 2, h * 0.54);
+    }
+    ctx.restore();
+  }
+
+  /** Extra seconds an intro title card adds in front of the animation, or 0 if disabled. */
+  function getIntroSeconds(settings) {
+    return settings.overlayIntro ? INTRO_SECONDS : 0;
+  }
+
+  /** scene.totalDuration plus whatever intro card time is currently enabled. */
+  function getTotalDurationWithIntro(scene, settings) {
+    return scene.totalDuration + getIntroSeconds(settings);
+  }
+
+  function introAlpha(ot, introSeconds) {
+    const fadeIn = 0.35, fadeOut = 0.5;
+    if (ot < fadeIn) return Geo.clamp(ot / fadeIn, 0, 1);
+    if (ot > introSeconds - fadeOut) return Geo.clamp((introSeconds - ot) / fadeOut, 0, 1);
+    return 1;
+  }
+
+  /**
+   * Like drawSceneFrame, but for output-time measured from the very start of
+   * the video including the (optional) intro title card — use this instead
+   * of drawSceneFrame wherever a raw "seconds since recording started" value
+   * is being driven (the live preview and the recorder both do).
+   */
+  function drawFrameWithIntro(mapRenderer, scene, ot, settings, ctx, w, h) {
+    const introSeconds = getIntroSeconds(settings);
+    if (introSeconds > 0 && ot < introSeconds) {
+      drawSceneFrame(mapRenderer, scene, 0, settings, ctx, w, h); // frozen first frame as a backdrop
+      drawIntroCard(ctx, scene, settings, w, h, introAlpha(ot, introSeconds));
+    } else {
+      drawSceneFrame(mapRenderer, scene, ot - introSeconds, settings, ctx, w, h);
+    }
+  }
+
   /** Draw the full frame for output-time `ot` (seconds) into ctx (size w x h). */
   function drawSceneFrame(mapRenderer, scene, ot, settings, ctx, w, h) {
     const cam = scene.cameraAtTime(ot);
@@ -266,5 +345,12 @@
     if (settings.overlaySummary) drawSummaryCard(ctx, scene, ot, w, h);
   }
 
-  global.SceneRenderer = { drawSceneFrame, formatDate, formatKm };
+  global.SceneRenderer = {
+    drawSceneFrame,
+    drawFrameWithIntro,
+    getIntroSeconds,
+    getTotalDurationWithIntro,
+    formatDate,
+    formatKm,
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

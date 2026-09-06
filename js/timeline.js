@@ -258,6 +258,22 @@
       const bt = Geo.clamp(ot - consumed, 0, settings.baseDuration);
       const frac = settings.baseDuration > 0 ? bt / settings.baseDuration : 1;
       const base = baseCamera(frac);
+
+      // Cinematic finish: for a camera mode that normally stays zoomed into
+      // local activity ('cluster'/'follow'), pull back to the full-route view
+      // over the last stretch of the video so it ends on "here's everywhere
+      // I went" right as the summary card comes in. A no-op for 'fit'/'reveal'
+      // since they already converge on (roughly) the same full-route framing.
+      if (settings.endingReveal !== false) {
+        const revealWindow = Math.min(3, settings.baseDuration * 0.15);
+        const revealStart = settings.baseDuration - revealWindow;
+        if (revealWindow > 0 && bt >= revealStart) {
+          const t = Geo.easeInOutCubic((bt - revealStart) / revealWindow);
+          const revealed = blend(base, { center: fitCenter, zoom: fitZoom }, t);
+          return { center: revealed.center, zoom: revealed.zoom, progressFrac: frac, focusLabel: null };
+        }
+      }
+
       return { center: base.center, zoom: base.zoom, progressFrac: frac, focusLabel: null };
     }
 

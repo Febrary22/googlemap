@@ -542,6 +542,7 @@
     const isCluster = $('#opt-camera-mode').value === 'cluster';
     $('#row-cluster-window').hidden = !isCluster;
     $('#hint-cluster-mode').hidden = !isCluster;
+    $('#row-intro-title').hidden = !$('#opt-overlay-intro').checked;
   }
 
   function bindEcho(inputSel, echoSel, fmt) {
@@ -608,9 +609,12 @@
       lineStyle: document.getElementById('opt-line-style').value,
       trailMode: document.getElementById('opt-trail-mode').value,
       trailHours: Number(document.getElementById('opt-trail-hours').value),
+      overlayIntro: document.getElementById('opt-overlay-intro').checked,
+      introTitle: document.getElementById('opt-intro-title').value,
       overlayDate: document.getElementById('opt-overlay-date').checked,
       overlayStats: document.getElementById('opt-overlay-stats').checked,
       overlayProgressBar: document.getElementById('opt-overlay-progressbar').checked,
+      endingReveal: document.getElementById('opt-ending-reveal').checked,
       overlaySummary: document.getElementById('opt-overlay-summary').checked,
     };
   }
@@ -629,7 +633,7 @@
     State.previewMapRenderer.setProvider(settings.provider);
     State.previewScene = TimelineScene.buildScene(State.filtered, settings);
     const frac = Number($('preview-scrub').value);
-    requestPreviewRedraw(frac * State.previewScene.totalDuration);
+    requestPreviewRedraw(frac * SceneRenderer.getTotalDurationWithIntro(State.previewScene, settings));
   }
 
   let previewRedrawRetryTimer = null;
@@ -643,7 +647,7 @@
     if (!State.previewScene) return;
     const canvas = $('preview-canvas');
     const ctx = canvas.getContext('2d');
-    SceneRenderer.drawSceneFrame(State.previewMapRenderer, State.previewScene, ot, State.previewSettings, ctx, canvas.width, canvas.height);
+    SceneRenderer.drawFrameWithIntro(State.previewMapRenderer, State.previewScene, ot, State.previewSettings, ctx, canvas.width, canvas.height);
   }
 
   let previewPlayRaf = null;
@@ -659,7 +663,10 @@
   function bindPreviewControls() {
     $('preview-scrub').addEventListener('input', () => {
       stopPreviewPlayback();
-      if (State.previewScene) drawPreviewFrame(Number($('preview-scrub').value) * State.previewScene.totalDuration);
+      if (State.previewScene) {
+        const total = SceneRenderer.getTotalDurationWithIntro(State.previewScene, State.previewSettings);
+        drawPreviewFrame(Number($('preview-scrub').value) * total);
+      }
     });
     $('btn-preview-play').addEventListener('click', () => {
       if (previewPlayRaf) {
@@ -677,7 +684,8 @@
           previewPlayStarted = performance.now();
         }
         $('preview-scrub').value = String(frac);
-        drawPreviewFrame(frac * State.previewScene.totalDuration);
+        const total = SceneRenderer.getTotalDurationWithIntro(State.previewScene, State.previewSettings);
+        drawPreviewFrame(frac * total);
         previewPlayRaf = requestAnimationFrame(loop);
       };
       previewPlayRaf = requestAnimationFrame(loop);
@@ -688,6 +696,7 @@
     document.getElementById('opt-line-colormode').addEventListener('change', syncFieldVisibility);
     document.getElementById('opt-trail-mode').addEventListener('change', syncFieldVisibility);
     document.getElementById('opt-camera-mode').addEventListener('change', syncFieldVisibility);
+    document.getElementById('opt-overlay-intro').addEventListener('change', syncFieldVisibility);
 
     bindEcho('opt-line-width', 'echo-line-width', (v) => `${v}px`);
     bindEcho('opt-trail-hours', 'echo-trail-hours', (v) => `${v}시간`);
@@ -780,13 +789,14 @@
     });
 
     const fps = Number(document.getElementById('opt-fps').value);
+    const totalWithIntro = SceneRenderer.getTotalDurationWithIntro(scene, settings);
     const musicFile = document.getElementById('opt-music-file').files[0];
     const audio = musicFile
       ? {
           url: State.musicUrl,
           startOffset: Number(document.getElementById('opt-music-start').value),
           volume: Number(document.getElementById('opt-music-volume').value),
-          fadeOutSeconds: document.getElementById('opt-music-fadeout').checked ? Math.min(3, scene.totalDuration * 0.15) : 0,
+          fadeOutSeconds: document.getElementById('opt-music-fadeout').checked ? Math.min(3, totalWithIntro * 0.15) : 0,
         }
       : null;
 
@@ -797,8 +807,8 @@
     try {
       blob = await State.recorder.record({
         fps,
-        durationSeconds: scene.totalDuration,
-        drawFrame: (ot) => SceneRenderer.drawSceneFrame(renderer, scene, ot, settings, ctx, w, h),
+        durationSeconds: totalWithIntro,
+        drawFrame: (ot) => SceneRenderer.drawFrameWithIntro(renderer, scene, ot, settings, ctx, w, h),
         audio,
         onProgress: (frac) => {
           $('render-progress-fill').style.width = `${35 + Math.round(frac * 65)}%`;

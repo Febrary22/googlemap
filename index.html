@@ -252,9 +252,14 @@
 
           <details class="settings-group" open>
             <summary>📊 화면 오버레이</summary>
+            <div class="field-row"><label><input type="checkbox" id="opt-overlay-intro" checked /> 시작에 타이틀 카드 보여주기</label></div>
+            <div class="field-row" id="row-intro-title">
+              <label>타이틀 이름 <input type="text" id="opt-intro-title" placeholder="예: 민수 (비워두면 '나의 타임라인')" /></label>
+            </div>
             <div class="field-row"><label><input type="checkbox" id="opt-overlay-date" checked /> 날짜 표시</label></div>
             <div class="field-row"><label><input type="checkbox" id="opt-overlay-stats" checked /> 누적 이동거리 표시</label></div>
             <div class="field-row"><label><input type="checkbox" id="opt-overlay-progressbar" checked /> 진행 바 표시</label></div>
+            <div class="field-row"><label><input type="checkbox" id="opt-ending-reveal" checked /> 마지막에 전체 경로 줌아웃</label></div>
             <div class="field-row"><label><input type="checkbox" id="opt-overlay-summary" checked /> 마지막에 요약 카드 보여주기</label></div>
           </details>
 
