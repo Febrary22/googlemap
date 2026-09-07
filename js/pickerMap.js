@@ -10,9 +10,11 @@
   class PickerMap {
     constructor(containerEl) {
       this.map = global.L.map(containerEl, { worldCopyJump: true }).setView([20, 0], 2);
-      global.L.tileLayer('https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      // Esri's free ArcGIS Online tiles — same source the video renderer
+      // uses, and unlike CARTO's basemap tiles these don't require an API key.
+      global.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap, © CARTO',
+        attribution: 'Esri, HERE, Garmin, USGS, Intermap',
       }).addTo(this.map);
       this.marker = null;
       this.pathLayer = null;

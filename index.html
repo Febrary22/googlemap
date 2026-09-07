@@ -139,10 +139,10 @@
             <div class="field-row">
               <label>배경 지도</label>
               <select id="opt-provider">
-                <option value="voyager" selected>컬러 (Voyager)</option>
-                <option value="positron">라이트 (Positron)</option>
-                <option value="dark">다크 (Dark Matter)</option>
-                <option value="satellite">위성</option>
+                <option value="satellite" selected>위성</option>
+                <option value="voyager">컬러</option>
+                <option value="positron">라이트</option>
+                <option value="dark">다크</option>
                 <option value="none">없음 (미니멀 배경)</option>
               </select>
             </div>
@@ -163,29 +163,29 @@
               <input type="color" id="opt-line-color" value="#4f8cff" />
             </div>
             <div class="field-row">
-              <label>선 두께 <span class="value-echo" id="echo-line-width">4px</span></label>
-              <input type="range" id="opt-line-width" min="1" max="10" step="0.5" value="4" />
+              <label>선 두께 <span class="value-echo" id="echo-line-width">3px</span></label>
+              <input type="range" id="opt-line-width" min="1" max="10" step="0.5" value="3" />
             </div>
             <div class="field-row">
               <label>선 스타일</label>
               <select id="opt-line-style">
-                <option value="solid" selected>실선</option>
+                <option value="solid">실선</option>
                 <option value="dashed">점선</option>
-                <option value="glow">네온 글로우</option>
+                <option value="glow" selected>네온 글로우</option>
               </select>
             </div>
             <div class="field-row">
               <label>궤적 남기기</label>
               <select id="opt-trail-mode">
-                <option value="full" selected>전체 경로 유지</option>
-                <option value="fade">최근 궤적만 남기고 서서히 사라짐 (혜성 효과)</option>
+                <option value="full">전체 경로 유지</option>
+                <option value="fade" selected>최근 궤적만 남기고 서서히 사라짐 (혜성 효과)</option>
               </select>
             </div>
-            <div class="field-row" id="row-trail-hours" hidden>
-              <label>남기는 시간(실제 시간 기준) <span class="value-echo" id="echo-trail-hours">6시간</span></label>
-              <input type="range" id="opt-trail-hours" min="1" max="72" step="1" value="6" />
+            <div class="field-row" id="row-trail-hours">
+              <label>남기는 시간(실제 시간 기준) <span class="value-echo" id="echo-trail-hours">8시간</span></label>
+              <input type="range" id="opt-trail-hours" min="1" max="72" step="1" value="8" />
             </div>
-            <p class="muted small" id="hint-trail-hours" hidden>예: 6시간으로 두면, 실제로 6시간 넘게 지난 위치는 화면에서 사라지고 최근 6시간 동안의 움직임만 계속 보여요.</p>
+            <p class="muted small" id="hint-trail-hours">예: 8시간으로 두면, 실제로 8시간 넘게 지난 위치는 화면에서 사라지고 최근 8시간 동안의 움직임만 계속 보여요.</p>
           </details>
 
           <details class="settings-group" open>
@@ -242,8 +242,8 @@
           <details class="settings-group" open>
             <summary>⏱️ 진행 속도 &amp; 길이</summary>
             <div class="field-row">
-              <label>영상 길이 <span class="value-echo" id="echo-duration">45초</span></label>
-              <input type="range" id="opt-duration" min="10" max="180" step="5" value="45" />
+              <label>영상 길이 <span class="value-echo" id="echo-duration">60초</span></label>
+              <input type="range" id="opt-duration" min="10" max="180" step="5" value="60" />
             </div>
             <div class="field-row">
               <label><input type="checkbox" id="opt-dwell-weighting" checked /> 오래 머문 장소에서 살짝 더 머무르기</label>
@@ -276,15 +276,15 @@
             <div class="field-row">
               <label>해상도</label>
               <select id="opt-resolution">
-                <option value="720">720p</option>
-                <option value="1080" selected>1080p</option>
+                <option value="720" selected>720p</option>
+                <option value="1080">1080p</option>
               </select>
             </div>
             <div class="field-row">
               <label>프레임레이트</label>
               <select id="opt-fps">
-                <option value="24">24fps</option>
-                <option value="30" selected>30fps</option>
+                <option value="24" selected>24fps</option>
+                <option value="30">30fps</option>
               </select>
             </div>
           </details>
@@ -344,7 +344,7 @@
 
   <footer class="app-footer">
     <p>모든 처리는 이 브라우저 안에서만 이루어지며, 어떤 위치 데이터도 서버로 전송되지 않습니다.</p>
-    <p class="muted small">지도 데이터 © OpenStreetMap contributors, © CARTO · 위성 이미지 © Esri</p>
+    <p class="muted small">지도 데이터 © Esri, HERE, Garmin, USGS · 위성 이미지 © Esri, Maxar, Earthstar Geographics</p>
   </footer>
 
   <!-- Focus-point picker modal (Leaflet) -->

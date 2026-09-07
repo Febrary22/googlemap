@@ -587,6 +587,12 @@
     canvas.height = ph;
   }
 
+  // Matches each provider's native tile resolution (see js/mapCanvas.js) so the
+  // camera doesn't zoom in past what the tiles actually have, which would just
+  // upscale/blur them. 'none' has no tiles, so it's free to zoom as far as the
+  // path data warrants.
+  const PROVIDER_MAX_ZOOM = { satellite: 19, voyager: 19, positron: 16, dark: 16, none: 19 };
+
   function gatherSettings(canvasW, canvasH) {
     const provider = document.getElementById('opt-provider').value;
     return {
@@ -599,7 +605,7 @@
       clusterWindowMs: Number(document.getElementById('opt-cluster-window').value) * 3600 * 1000,
       padding: Math.round(canvasW * 0.08),
       minZoom: 2,
-      maxZoom: provider === 'satellite' ? 19 : 18,
+      maxZoom: PROVIDER_MAX_ZOOM[provider] || 18,
       canvasW,
       canvasH,
       provider,

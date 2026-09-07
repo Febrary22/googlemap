@@ -12,26 +12,32 @@
 
   const Geo = global.Geo;
 
+  // All raster sources below are Esri's public ArcGIS Online basemap tile
+  // services — free, no API key, and CORS-enabled, so the canvas stays
+  // exportable. (CARTO's basemap tiles used to work the same way but now
+  // require a registered API key, which showed up as an "API KEY REQUIRED"
+  // watermark baked right into the tile images — switched away from them
+  // entirely rather than have that leak into recorded videos.)
   const PROVIDERS = {
     positron: {
-      label: '라이트 (Positron)',
-      url: (z, x, y) => `https://basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`,
-      attribution: '© OpenStreetMap, © CARTO',
-      maxZoom: 20,
+      label: '라이트',
+      url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${z}/${y}/${x}`,
+      attribution: 'Esri, HERE, Garmin, FAO, NOAA, USGS',
+      maxZoom: 16,
       dark: false,
     },
     dark: {
-      label: '다크 (Dark Matter)',
-      url: (z, x, y) => `https://basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`,
-      attribution: '© OpenStreetMap, © CARTO',
-      maxZoom: 20,
+      label: '다크',
+      url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${z}/${y}/${x}`,
+      attribution: 'Esri, HERE, Garmin, FAO, NOAA, USGS',
+      maxZoom: 16,
       dark: true,
     },
     voyager: {
-      label: '컬러 (Voyager)',
-      url: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`,
-      attribution: '© OpenStreetMap, © CARTO',
-      maxZoom: 20,
+      label: '컬러',
+      url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`,
+      attribution: 'Esri, HERE, Garmin, USGS, Intermap',
+      maxZoom: 19,
       dark: false,
     },
     satellite: {
@@ -54,7 +60,7 @@
     constructor(canvas, options) {
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
-      this.provider = (options && options.provider) || 'voyager';
+      this.provider = (options && options.provider) || 'satellite';
       this.bgColor = (options && options.bgColor) || '#0b1220';
       this.cache = new Map(); // "z/x/y/provider" -> { img, loaded, failed }
     }
