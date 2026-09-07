@@ -1,8 +1,10 @@
 /**
  * app.js — wires the DOM (index.html) to the parser/timeline/renderer
- * modules and holds all UI state. Everything here runs only in the
- * browser; no data ever leaves it (no fetch to any first-party backend —
- * the only network calls are read-only map tile requests).
+ * modules and holds all UI state. The uploaded timeline file and everything
+ * derived from it (points, visits, the rendered video) never leaves the
+ * browser — the only network calls are read-only map tile requests and,
+ * if ANALYTICS_CODE below is filled in, anonymous/aggregate visitor
+ * analytics that never see anything inside an uploaded file.
  */
 (function () {
   'use strict';
@@ -19,10 +21,42 @@
   // ---------------------------------------------------------------------
   const SUPPORT_CONFIG = {
     freeUses: 5,
-    paymentUrl: '', // e.g. a Toss "송금받기" link: https://toss.me/your-handle
-    socialUrl: '', // e.g. the YouTube/Instagram post you want likes & comments on
+    paymentUrl: '', // e.g. your Brunch Story "후원하기" link
+    socialUrl: '', // e.g. the Brunch post you want 라이킷·댓글 on
   };
   const USAGE_STORAGE_KEY = 'timelineVideoMaker.usageCount';
+
+  // ---------------------------------------------------------------------
+  // ✏️ OPTIONAL — anonymous, aggregate-only visitor analytics.
+  // Sign up free at https://www.goatcounter.com (no credit card, no cookies,
+  // GDPR/PIPA-friendly by design), then paste your site code here (just the
+  // part before ".goatcounter.com"). Leave blank to skip analytics entirely
+  // — no script loads, no request is ever made.
+  //
+  // What this can tell you: total visits, rough visitor country/device
+  // breakdown (from IP, not from anything inside an uploaded file), how far
+  // people get through the 4 steps before dropping off, how many videos got
+  // rendered in total, and which map style / camera mode people pick most.
+  // What it can NEVER tell you: anything about a specific person's actual
+  // location history — that data never leaves their browser, on purpose.
+  // ---------------------------------------------------------------------
+  const ANALYTICS_CODE = '';
+
+  function initAnalytics() {
+    if (!ANALYTICS_CODE) return;
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = '//gc.zgo.at/count.js';
+    script.setAttribute('data-goatcounter', `https://${ANALYTICS_CODE}.goatcounter.com/count`);
+    document.head.appendChild(script);
+  }
+
+  /** No-op if analytics isn't configured (or the script got ad-blocked) — never throws. */
+  function trackEvent(name) {
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ path: name, title: name, event: true });
+    }
+  }
 
   const State = {
     currentStep: 'guide',
@@ -61,7 +95,11 @@
   function goToStep(name) {
     State.currentStep = name;
     const idx = STEPS.indexOf(name);
-    if (idx > State.maxStepIndex) State.maxStepIndex = idx;
+    const isNewFarthest = idx > State.maxStepIndex;
+    if (isNewFarthest) {
+      State.maxStepIndex = idx;
+      trackEvent('step_' + name); // funnel: count each step only the first time it's reached
+    }
     $$('.step-panel').forEach((p) => p.classList.toggle('active', p.id === 'step-' + name));
     $$('#stepper .step').forEach((li) => {
       const liIdx = STEPS.indexOf(li.dataset.step);
@@ -161,6 +199,7 @@
       return;
     }
 
+    trackEvent('file_uploaded');
     State.rawData = result;
     State.customFocusPoints = [];
     renderCustomFocusList();
@@ -910,6 +949,9 @@
     $('render-progress-fill').style.width = '100%';
     $('render-result').hidden = false;
     recordUsage();
+    trackEvent('video_rendered');
+    trackEvent('provider_' + settings.provider);
+    trackEvent('camera_' + settings.cameraMode);
   }
 
   function bindRenderControls() {
@@ -928,8 +970,9 @@
   // ---------------------------------------------------------------------
 
   function init() {
-    State.previewMapRenderer = new MapCanvasRenderer($('preview-canvas'), { provider: 'voyager' });
-    State.renderMapRenderer = new MapCanvasRenderer($('render-canvas'), { provider: 'voyager' });
+    initAnalytics();
+    State.previewMapRenderer = new MapCanvasRenderer($('preview-canvas'), { provider: 'satellite' });
+    State.renderMapRenderer = new MapCanvasRenderer($('render-canvas'), { provider: 'satellite' });
 
     bindStepper();
     bindGuideTabs();
