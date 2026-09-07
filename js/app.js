@@ -21,8 +21,8 @@
   // ---------------------------------------------------------------------
   const SUPPORT_CONFIG = {
     freeUses: 5,
-    paymentUrl: '', // e.g. your Brunch Story "후원하기" link
-    socialUrl: '', // e.g. the Brunch post you want 라이킷·댓글 on
+    paymentUrl: 'https://brunch.co.kr/@08b0349ec2fc42a', // 브런치 프로필의 "후원하기"
+    socialUrl: 'https://brunch.co.kr/@08b0349ec2fc42a', // 이 앱을 소개한 글을 올리면 그 글 주소로 바꿔주세요
   };
   const USAGE_STORAGE_KEY = 'timelineVideoMaker.usageCount';
 
