@@ -370,6 +370,21 @@
     </div>
   </div>
 
+  <!-- Friendly, non-blocking support nudge shown after the free-use quota (see SUPPORT_CONFIG in js/app.js) -->
+  <div class="modal" id="support-modal" hidden>
+    <div class="modal-content">
+      <h3 id="support-modal-title">🎉 벌써 여러 번 만드셨네요!</h3>
+      <p class="muted">이 앱이 마음에 드셨다면 아래 방법으로 응원해주세요 — 결제하지 않아도 계속 무료로 쓰실 수 있어요!</p>
+      <div class="panel-actions">
+        <a class="btn btn-primary" id="support-payment-link" href="#" target="_blank" rel="noopener" hidden>☕ 1,900원 후원하기</a>
+        <a class="btn btn-ghost" id="support-social-link" href="#" target="_blank" rel="noopener" hidden>👍 좋아요·댓글 남기기</a>
+      </div>
+      <div class="panel-actions">
+        <button class="btn btn-ghost" id="btn-support-continue">감사해요, 계속 사용할게요 →</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>

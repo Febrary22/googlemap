@@ -10,6 +10,20 @@
   const STEPS = ['guide', 'upload', 'settings', 'render'];
   const PREVIEW_PLAY_SECONDS = 8;
 
+  // ---------------------------------------------------------------------
+  // ✏️ EDIT THIS BEFORE PUBLISHING — fill in your own links.
+  // A friendly, non-blocking nudge shown after `freeUses` renders in this
+  // browser. It never blocks anything (there's no server to enforce a real
+  // paywall — see the "how strict" conversation this came out of), it just
+  // asks nicely. Leave a URL empty ('') to hide that specific button.
+  // ---------------------------------------------------------------------
+  const SUPPORT_CONFIG = {
+    freeUses: 5,
+    paymentUrl: '', // e.g. a Toss "송금받기" link: https://toss.me/your-handle
+    socialUrl: '', // e.g. the YouTube/Instagram post you want likes & comments on
+  };
+  const USAGE_STORAGE_KEY = 'timelineVideoMaker.usageCount';
+
   const State = {
     currentStep: 'guide',
     maxStepIndex: 0,
@@ -754,6 +768,47 @@
   // Step 4: render
   // ---------------------------------------------------------------------
 
+  function getUsageCount() {
+    try {
+      return Number(localStorage.getItem(USAGE_STORAGE_KEY)) || 0;
+    } catch (e) {
+      return 0; // private browsing / storage blocked — just treat as "first use" every time
+    }
+  }
+
+  function recordUsage() {
+    try {
+      localStorage.setItem(USAGE_STORAGE_KEY, String(getUsageCount() + 1));
+    } catch (e) {
+      /* nothing to do if storage isn't available */
+    }
+  }
+
+  /** Friendly, dismissable nudge — never blocks; `onContinue` always eventually fires. */
+  function maybeShowSupportModal(onContinue) {
+    const count = getUsageCount();
+    if (count < SUPPORT_CONFIG.freeUses) {
+      onContinue();
+      return;
+    }
+    const paymentLink = $('support-payment-link');
+    const socialLink = $('support-social-link');
+    paymentLink.hidden = !SUPPORT_CONFIG.paymentUrl;
+    if (SUPPORT_CONFIG.paymentUrl) paymentLink.href = SUPPORT_CONFIG.paymentUrl;
+    socialLink.hidden = !SUPPORT_CONFIG.socialUrl;
+    if (SUPPORT_CONFIG.socialUrl) socialLink.href = SUPPORT_CONFIG.socialUrl;
+    $('support-modal-title').textContent = `🎉 벌써 ${count}번째 영상이에요!`;
+    $('support-modal').hidden = false;
+
+    const btn = $('btn-support-continue');
+    const handler = () => {
+      $('support-modal').hidden = true;
+      btn.removeEventListener('click', handler);
+      onContinue();
+    };
+    btn.addEventListener('click', handler);
+  }
+
   function resetRenderUI() {
     $('render-result').hidden = true;
     $('render-controls-idle').hidden = false;
@@ -854,10 +909,11 @@
     $('render-status').textContent = '완료!';
     $('render-progress-fill').style.width = '100%';
     $('render-result').hidden = false;
+    recordUsage();
   }
 
   function bindRenderControls() {
-    $('btn-render-start').addEventListener('click', startRender);
+    $('btn-render-start').addEventListener('click', () => maybeShowSupportModal(startRender));
     $('btn-render-cancel').addEventListener('click', () => {
       if (State.recorder) State.recorder.cancel();
     });
